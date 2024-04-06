@@ -25,6 +25,7 @@
 @import "custom/forgot-password.css";
 @import "custom/pdp-mobile-social-share.css";
 @import "custom/general.css";
+@import "custom/exam-homepage.css";
 
 body {
     @apply text-neutral;

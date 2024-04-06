@@ -1,0 +1,134 @@
+.hyva-mobile-banner {
+    &.mgz-element-slider .slide-heading .slide-text {
+        @apply text-[20px] leading-[28px] font-bold;
+    }
+    .slide-buttons .mgz-btn {
+        @apply bg-primary-500 text-white w-[127px] h-[36px] flex justify-center items-center;
+        svg {
+            margin-left: 10px;
+        }
+    }
+    &.mgz-element-slider .item-content {
+        text-align: center;
+        margin: 0 auto;
+        width: 100%;
+    }
+}
+.hyva-desktop-banner {
+    @apply hidden;
+}
+.swift-3column .mgz-single-image-wrapper {
+    width: 100%;
+}
+.swift-3column .mgz-col-md-3 {
+    width: 20%;
+    img {
+        width: 100%;
+    }
+}
+.swift-3column .mgz-col-md-9 {
+    width: 78.5%;
+    img {
+        width: 100%;
+    }
+}
+.mgz-element-column.hero-banner > .mgz-element-inner {
+    @apply px-0;
+}
+
+@screen sm-max {
+    .swift-small-banners-category .mgz-element-column {
+        width: 50%;
+    }
+    .swift-small-banners-category .mgz-element-inner {
+        margin-bottom: 0 !important;
+        margin-top: 0 !important;
+    }
+    .swift-small-banners-category .mgz-element-column img {
+        width: 100%;
+    }
+    .swift-small-banners-category .mgz-element-column .mgz-single-image-wrapper {
+        width: 100% !important;
+    }
+    .swift-small-banners-category.mgz-element .image-title {
+        font-size: 14px !important;
+    }
+    .swift-3column .mgz-col-md-3 > div:first-child {
+        width: 50%;
+    }
+    .swift-3column .mgz-col-md-3 > div:last-child {
+        width: 100%;
+        display: flex;
+        flex-direction: row;
+        padding: 0;
+        @apply gap-x-4 justify-between;
+    }
+    .swift-3column .image-title {
+        font-size: 20px !important;
+        font-weight: 700 !important;
+    }
+    .swift-3column .mgz-col-md-3 {
+        width: 100%;
+        flex-direction: row;
+    }
+    .swift-3column .mgz-col-md-9 {
+        width: 100%;
+    }
+}
+
+@screen md {
+    .hyva-desktop-banner {
+        @apply block;
+        &.mgz-element-slider .slide-heading .slide-text {
+            @apply text-[36px] leading-[40px] font-bold;
+        }
+        .slide-buttons .mgz-btn {
+            @apply w-[145px] bg-primary-500 text-white flex justify-center items-center;
+            svg {
+                margin-left: 10px;
+            }
+        }
+        &.mgz-element-slider .mgz-flex-position-middle-left .item-content {
+            left: 8%;
+        }
+    }
+    .hyva-mobile-banner {
+        @apply hidden;
+    }
+}
+
+@screen md-range {
+    .swift-3column .image-title {
+        font-size: 16px !important;
+        font-weight: 700 !important;
+    }
+    .swift-3column .image-content {
+        padding: 15px 0 !important;
+    }
+    .swift-small-banners-category.mgz-element .image-title {
+        font-size: 16px !important;
+    }
+    .swift-small-banners-category .mgz-element-column {
+        width: 25%;
+    }
+}
+
+@screen md-max {
+    .swift-small-banners-category .mgz-element-column:nth-child(5),
+    .swift-small-banners-category .mgz-element-column:nth-child(6) {
+        display: none;
+    }
+    .hyva-small-banners .mgz-img-content {
+        margin-top: 0;
+    }
+}
+
+.hyva-title-product-slider .mgz-element-inner .inner-content {
+    @apply flex items-center;
+    p a {
+        @apply !no-underline;
+        span {
+            @apply !text-neutral-900 !capitalize;
+        }
+    }
+}

@@ -1,0 +1,527 @@
+<?php
+/**
+ * Hyvä Themes - https://hyva.io
+ * Copyright © Hyvä Themes 2020-present. All rights reserved.
+ * This product is licensed per Magento install
+ * See https://hyva.io/license
+ */
+
+use Hyva\Theme\Model\ViewModelRegistry;
+use Hyva\Theme\ViewModel\HeroiconsOutline;
+use Hyva\Theme\ViewModel\Navigation;
+use Magento\Framework\View\Element\Template;
+use Magento\Framework\Escaper;
+
+/** @var Template $block */
+/** @var Escaper $escaper */
+/** @var ViewModelRegistry $viewModels */
+
+/** @var HeroiconsOutline $heroicons */
+$heroicons = $viewModels->require(HeroiconsOutline::class);
+
+/** @var Navigation $viewModelNavigation */
+$viewModelNavigation = $viewModels->require(Navigation::class, $block);
+
+$uniqueId = '_' . uniqid();
+
+// Order is important here: 1. build the menu data, 2. then set the cache tags from the view model identities
+$menuItems = $viewModelNavigation->getNavigation(7);
+$block->setData('cache_tags', $viewModelNavigation->getIdentities());
+
+?>
+<nav
+    x-data="initMenuMobile<?= $escaper->escapeHtml($uniqueId) ?>()"
+    @load.window="setActiveMenu($root)"
+    @keydown.window.escape="closeMenu()"
+    class="z-30 navigation lg:hidden !w-6 !h-6 !bg-transparent"
+    aria-label="<?= $escaper->escapeHtmlAttr(__('Site navigation')) ?>"
+    role="navigation"
+>
+    <!-- mobile -->
+    <button
+        x-ref="mobileMenuTrigger"
+        @click="openMenu()"
+        :class="{'overflow-x-hidden overflow-y-auto fixed top-0 left-0 w-full' : open}"
+        type="button"
+        aria-label="<?= $escaper->escapeHtmlAttr(__('Open menu')) ?>"
+        aria-haspopup="menu"
+        :aria-expanded="open"
+        :hidden="open"
+    >
+        <?= $heroicons->menuHtml('', 24, 24, [":class" => "{ 'hidden' : open, 'block': !open }", "aria-hidden" => "true"]) ?>
+    </button>
+    <div
+        x-ref="mobileMenuNavLinks"
+        class="fixed top-0 left-0 w-full h-full flex flex-col overflow-y-auto overflow-x-hidden mobile-menu-sidebar hidden"
+        :class="{ 'hidden' : !open }"
+        :aria-hidden="open ? 'false' : 'true'"
+        role="dialog"
+        aria-modal="true"
+        x-show="open"
+    >
+        <div class="tab-wrapper w-[85%] max-w-[320px] md:w-[55%] md:max-w-[396px] h-full bg-white relative" x-data="{ activeTab: 'menu' }">
+            <nav class="flex h-[44px] items-center bg-neutral-100">
+                <a
+                    @click="activeTab = 'menu'"
+                    class="mobile-tab-menu-title"
+                    :class="{ 'active': activeTab === 'menu' }"
+                >Menu</a>
+                <a
+                    @click="activeTab = 'account'"
+                    class="mobile-tab-menu-title"
+                    :class="{ 'active': activeTab === 'account' }"
+                >Account</a>
+            </nav>
+
+            <div class="tab-panel max-h-[calc(100%_-_44px)] overflow-y-auto p-4" :class="{ 'active': activeTab === 'menu' }" x-show="activeTab === 'menu'">
+                <ul
+                    class="flex flex-col gap-y-1"
+                    aria-label="<?= $escaper->escapeHtmlAttr(__('Site navigation links')) ?>"
+                >
+                    <?php foreach ($menuItems as $index => $menuItem): ?>
+                        <li
+                            data-child-id="<?= $escaper->escapeHtmLAttr($index) ?>-main"
+                            class="level-0"
+                        >
+                            <div
+                                class="
+                                    flex items-center transition-transform duration-150 ease-in-out
+                                    transform py-0 border-b border-neutral-100 text-neutral font-medium
+                                    hover:text-primary
+                                "
+                                :class="{
+                                    '-translate-x-full' : mobilePanelActiveId,
+                                    'translate-x-0' : !mobilePanelActiveId
+                                }"
+                            >
+                                <a
+                                    class="flex items-center w-full px-4 py-3 text-base leading-[18px] cursor-pointer level-0"
+                                    href="<?= $escaper->escapeUrl($menuItem['url']) ?>"
+                                    title="<?= $escaper->escapeHtmlAttr($menuItem['name']) ?>"
+                                >
+                                    <?= $escaper->escapeHtml($menuItem['name']) ?>
+                                </a>
+                                <?php if (!empty($menuItem['childData'])): ?>
+                                    <button
+                                        @click="openSubcategory('<?= /* @noEscape */ $index ?>')"
+                                        class="absolute right-0 flex items-center justify-center mr-3 cursor-pointer"
+                                        aria-label="<?= $escaper->escapeHtmlAttr(__('Open %1 subcategories', $menuItem['name'])) ?>"
+                                        aria-haspopup="true"
+                                        :aria-expanded="mobilePanelActiveId === '<?= /* @noEscape */ (string) $index ?>'"
+                                    >
+                                        <?= $heroicons->chevronRightHtml('', 20, 20, ["aria-hidden" => "true"]) ?>
+                                    </button>
+                                <?php endif; ?>
+                            </div>
+                            <?php if (!empty($menuItem['childData'])): ?>
+                                <div
+                                    data-child-id="<?= $escaper->escapeHtmLAttr($index) ?>"
+                                    class="
+                                        absolute top-11 left-0 z-10 flex flex-col w-full
+                                        max-h-[calc(100%_-_44px)] overflow-y-auto bg-white
+                                    "
+                                    :class="{
+                                        'p-4': mobilePanelActiveId === '<?= /* @noEscape */ (string) $index ?>'
+                                    }"
+                                >
+                                    <ul class="text-base"
+                                        aria-label="<?= $escaper->escapeHtmlAttr(__('Subcategories')) ?>"
+                                    >
+                                        <li data-child-id="<?= $escaper->escapeHtmLAttr($index) ?>"
+                                            class="transition-transform text-base duration-200 ease-in-out translate-x-full transform"
+                                            :class="{
+                                                'hidden': mobilePanelActiveId !== '<?= /* @noEscape */ (string) $index ?>',
+                                                'translate-x-full' : mobilePanelActiveId !== '<?= /* @noEscape */ (string) $index ?>',
+                                                'translate-x-0' : mobilePanelActiveId === '<?= /* @noEscape */ (string) $index ?>',
+                                            }">
+                                            <button
+                                                type="button"
+                                                class="
+                                                    flex items-center px-4 py-3 cursor-pointer
+                                                    w-full text-neutral font-medium bg-neutral-100
+                                                "
+                                                @click="backToMainCategories('<?= /* @noEscape */ $index ?>-main')"
+                                                aria-label="<?= $escaper->escapeHtmlAttr(__('Back to main categories')) ?>"
+                                            >
+                                                <?= $heroicons->chevronLeftHtml('', 20, 20, ["aria-hidden" => "true"]); ?>
+                                                <span class="ml-2 text-left">
+                                                    <?= $escaper->escapeHtml($menuItem['name']) ?>
+                                                </span>
+                                            </button>
+                                        </li>
+                                        <li data-child-id="<?= $escaper->escapeHtmLAttr($index) ?>"
+                                            class="transition-transform text-base duration-200 ease-in-out translate-x-full transform"
+                                            :class="{
+                                                'hidden': mobilePanelActiveId !== '<?= /* @noEscape */ (string) $index ?>',
+                                                'translate-x-full' : mobilePanelActiveId !== '<?= /* @noEscape */ (string) $index ?>',
+                                                'translate-x-0' : mobilePanelActiveId === '<?= /* @noEscape */ (string) $index ?>',
+                                            }">
+                                            <a
+                                                href="<?= $escaper->escapeUrl($menuItem['url']) ?>"
+                                                title="<?= $escaper->escapeHtmlAttr($menuItem['name']) ?>"
+                                                class="
+                                                    flex items-center w-full p-4 cursor-pointer text-neutral-500 relative
+                                                    after:absolute after:content-[''] after:border-b-neutral-100 after:border-b after:border-solid after:bottom-0 after:inset-x-[16px]
+                                                "
+                                            >
+                                                <span>
+                                                    <?= $escaper->escapeHtml(__('View All')) ?>
+                                                </span>
+                                            </a>
+                                        </li>
+                                        <?php foreach ($menuItem['childData'] as $index1 => $subMenuItem): ?>
+                                            <li data-child-id="<?= $escaper->escapeHtmLAttr($index) ?>"
+                                                class="relative transition-transform text-base duration-200 ease-in-out translate-x-full transform hover:text-primary" 
+                                                :class="{
+                                                    'hidden': mobilePanelActiveId !== '<?= /* @noEscape */ (string) $index ?>',
+                                                    'translate-x-full' : mobilePanelActiveId !== '<?= /* @noEscape */ (string) $index ?>',
+                                                    'translate-x-0' : mobilePanelActiveId === '<?= /* @noEscape */ (string) $index ?>',
+                                                }">
+                                                <div class="flex justify-between
+                                                    after:absolute after:content-[''] after:border-b-neutral-100 after:border-b after:border-solid after:bottom-0 after:inset-x-[16px]
+                                                    hover:text-primary
+                                                ">
+                                                    <a
+                                                        href="<?= $escaper->escapeUrl($subMenuItem['url']) ?>"
+                                                        title="<?= $escaper->escapeHtmlAttr($subMenuItem['name']) ?>"
+                                                        class="
+                                                            flex items-center w-full p-4 cursor-pointer text-neutral-500 relative
+                                                        "
+                                                    >
+                                                        <span>
+                                                            <?= $escaper->escapeHtml($subMenuItem['name']) ?>
+                                                        </span>
+                                                    </a>
+                                                    <?php if (!empty($subMenuItem['childData'])): ?>
+                                                        <button
+                                                            @click="customSubcategory('<?= /* @noEscape */ $index1 ?>')"
+                                                            class="flex items-center justify-center mr-3 cursor-pointer"
+                                                            aria-label="<?= $escaper->escapeHtmlAttr(__('Open %1 subcategories', $subMenuItem['name'])) ?>"
+                                                            aria-haspopup="true"
+                                                            :aria-expanded="mobilePanelActiveId === '<?= /* @noEscape */ (string) $index1 ?>'"
+                                                        >
+                                                            <?= $heroicons->chevronRightHtml('', 20, 20, ["aria-hidden" => "true"]) ?>
+                                                        </button>
+                                                    <?php endif; ?>
+                                                </div>
+                                            </li>
+                                            <?php if (!empty($subMenuItem['childData'])): ?>
+                                                <li data-child-id="<?= $escaper->escapeHtmLAttr($index1) ?>"
+                                                    :class="{
+                                                        'hidden': mobilePanelActiveId !== '<?= /* @noEscape */ (string) $index1 ?>',
+                                                        'mt-4 ml-4 mr-4': mobilePanelActiveId === '<?= /* @noEscape */ (string) $index1 ?>',
+                                                    }" x-transition>
+                                                    <button
+                                                        type="button"
+                                                        class="
+                                                            flex items-center px-4 py-3 cursor-pointer
+                                                            w-full text-neutral font-medium bg-neutral-100
+                                                        "
+                                                        @click="customSubcategory('<?= /* @noEscape */ $index ?>')"
+                                                        aria-label="<?= $escaper->escapeHtmlAttr(__('Back to main categories')) ?>"
+                                                    >
+                                                        <?= $heroicons->chevronLeftHtml('', 20, 20, ["aria-hidden" => "true"]); ?>
+                                                        <span class="ml-2 text-left">
+                                                            <?= $escaper->escapeHtml($menuItem['name']) ?> /
+                                                            <?= $escaper->escapeHtml($subMenuItem['name']) ?>
+                                                        </span>
+                                                    </button>
+                                                </li>
+                                                <?php foreach ($subMenuItem['childData'] as $index2 => $subMenuItem1): ?>
+                                                    <li data-child-id="<?= $escaper->escapeHtmLAttr($index1) ?>"
+                                                        class="relative" 
+                                                        :class="{
+                                                            'hidden': mobilePanelActiveId !== '<?= /* @noEscape */ (string) $index1 ?>',
+                                                            'ml-4 mr-4': mobilePanelActiveId === '<?= /* @noEscape */ (string) $index1 ?>',
+                                                        }">
+                                                        <div class="flex justify-between
+                                                            after:absolute after:content-[''] after:border-b-neutral-100 after:border-b after:border-solid after:bottom-0 after:inset-x-[16px]
+                                                            hover:text-primary
+                                                        ">
+                                                            <a
+                                                                href="<?= $escaper->escapeUrl($subMenuItem1['url']) ?>"
+                                                                title="<?= $escaper->escapeHtmlAttr($subMenuItem1['name']) ?>"
+                                                                class="
+                                                                    flex items-center w-full p-4 cursor-pointer text-neutral-500 relative
+                                                                "
+                                                            >
+                                                                <span>
+                                                                    <?= $escaper->escapeHtml($subMenuItem1['name']) ?>
+                                                                </span>
+                                                            </a>
+                                                            <?php if (!empty($subMenuItem1['childData'])): ?>
+                                                                <button
+                                                                    @click="customSubcategory('<?= /* @noEscape */ $index2 ?>')"
+                                                                    class="flex items-center justify-center mr-3 cursor-pointer"
+                                                                    aria-label="<?= $escaper->escapeHtmlAttr(__('Open %1 subcategories', $subMenuItem1['name'])) ?>"
+                                                                    aria-haspopup="true"
+                                                                    :aria-expanded="mobilePanelActiveId === '<?= /* @noEscape */ (string) $index2 ?>'"
+                                                                >
+                                                                    <?= $heroicons->chevronRightHtml('', 20, 20, ["aria-hidden" => "true"]) ?>
+                                                                </button>
+                                                            <?php endif; ?>
+                                                        </div>
+                                                    </li>
+                                                    <?php if (!empty($subMenuItem1['childData'])): ?>
+                                                        <li 
+                                                            :class="{
+                                                                'hidden': mobilePanelActiveId !== '<?= /* @noEscape */ (string) $index2 ?>',
+                                                                'mt-4 ml-4 mr-4': mobilePanelActiveId === '<?= /* @noEscape */ (string) $index2 ?>',
+                                                            }">
+                                                            <button
+                                                                type="button"
+                                                                class="
+                                                                    flex items-center px-4 py-3 cursor-pointer
+                                                                    w-full text-neutral font-medium bg-neutral-100
+                                                                "
+                                                                @click="customSubcategory('<?= /* @noEscape */ $index1 ?>')"
+                                                                aria-label="<?= $escaper->escapeHtmlAttr(__('Back to main categories')) ?>"
+                                                            >
+                                                                <?= $heroicons->chevronLeftHtml('', 20, 20, ["aria-hidden" => "true"]); ?>
+                                                                <span class="ml-2 text-left">
+                                                                    <?= $escaper->escapeHtml($menuItem['name']) ?> /
+                                                                    <?= $escaper->escapeHtml($subMenuItem['name']) ?> /
+                                                                    <?= $escaper->escapeHtml($subMenuItem1['name']) ?>
+                                                                </span>
+                                                            </button>
+                                                        </li>
+                                                        <?php foreach ($subMenuItem1['childData'] as $index3 => $subMenuItem2): ?>
+                                                            <li class="relative" 
+                                                                :class="{
+                                                                    'hidden': mobilePanelActiveId !== '<?= /* @noEscape */ (string) $index2 ?>',
+                                                                    'ml-4 mr-4': mobilePanelActiveId === '<?= /* @noEscape */ (string) $index2 ?>',
+                                                                }">
+                                                                <div class="flex justify-between
+                                                                    after:absolute after:content-[''] after:border-b-neutral-100 after:border-b after:border-solid after:bottom-0 after:inset-x-[16px]
+                                                                    hover:text-primary
+                                                                ">
+                                                                    <a
+                                                                        href="<?= $escaper->escapeUrl($subMenuItem2['url']) ?>"
+                                                                        title="<?= $escaper->escapeHtmlAttr($subMenuItem2['name']) ?>"
+                                                                        class="
+                                                                            flex items-center w-full p-4 cursor-pointer text-neutral-500 relative
+                                                                        "
+                                                                    >
+                                                                        <span>
+                                                                            <?= $escaper->escapeHtml($subMenuItem2['name']) ?>
+                                                                        </span>
+                                                                    </a>
+                                                                    <?php if (!empty($subMenuItem2['childData'])): ?>
+                                                                        <button
+                                                                            @click="customSubcategory('<?= /* @noEscape */ $index3 ?>')"
+                                                                            class="flex items-center justify-center mr-3 cursor-pointer"
+                                                                            aria-label="<?= $escaper->escapeHtmlAttr(__('Open %1 subcategories', $subMenuItem2['name'])) ?>"
+                                                                            aria-haspopup="true"
+                                                                            :aria-expanded="mobilePanelActiveId === '<?= /* @noEscape */ (string) $index3 ?>'"
+                                                                        >
+                                                                            <?= $heroicons->chevronRightHtml('', 20, 20, ["aria-hidden" => "true"]) ?>
+                                                                        </button>
+                                                                    <?php endif; ?>
+                                                                </div>
+                                                            </li>
+                                                            <?php if (!empty($subMenuItem2['childData'])): ?>
+                                                                <li 
+                                                                    :class="{
+                                                                        'hidden': mobilePanelActiveId !== '<?= /* @noEscape */ (string) $index3 ?>',
+                                                                        'mt-4 ml-4 mr-4': mobilePanelActiveId === '<?= /* @noEscape */ (string) $index3 ?>',
+                                                                    }">
+                                                                    <button
+                                                                        type="button"
+                                                                        class="
+                                                                            flex items-center px-4 py-3 cursor-pointer
+                                                                            w-full text-neutral font-medium bg-neutral-100
+                                                                        "
+                                                                        @click="customSubcategory('<?= /* @noEscape */ $index2 ?>')"
+                                                                        aria-label="<?= $escaper->escapeHtmlAttr(__('Back to main categories')) ?>"
+                                                                    >
+                                                                        <?= $heroicons->chevronLeftHtml('', 20, 20, ["aria-hidden" => "true"]); ?>
+                                                                        <span class="ml-2 text-left">
+                                                                            <?= $escaper->escapeHtml($menuItem['name']) ?> /
+                                                                            <?= $escaper->escapeHtml($subMenuItem['name']) ?> /
+                                                                            <?= $escaper->escapeHtml($subMenuItem1['name']) ?> /
+                                                                            <?= $escaper->escapeHtml($subMenuItem2['name']) ?>
+                                                                        </span>
+                                                                    </button>
+                                                                </li>
+                                                                <?php foreach ($subMenuItem2['childData'] as $index4 => $subMenuItem3): ?>
+                                                                    <li class="relative" 
+                                                                        :class="{
+                                                                            'hidden': mobilePanelActiveId !== '<?= /* @noEscape */ (string) $index3 ?>',
+                                                                            'ml-4 mr-4': mobilePanelActiveId === '<?= /* @noEscape */ (string) $index3 ?>',
+                                                                        }">
+                                                                        <div class="flex justify-between
+                                                                            after:absolute after:content-[''] after:border-b-neutral-100 after:border-b after:border-solid after:bottom-0 after:inset-x-[16px]
+                                                                            hover:text-primary
+                                                                        ">
+                                                                            <a
+                                                                                href="<?= $escaper->escapeUrl($subMenuItem3['url']) ?>"
+                                                                                title="<?= $escaper->escapeHtmlAttr($subMenuItem3['name']) ?>"
+                                                                                class="
+                                                                                    flex items-center w-full p-4 cursor-pointer text-neutral-500 relative
+                                                                                "
+                                                                            >
+                                                                                <span>
+                                                                                    <?= $escaper->escapeHtml($subMenuItem3['name']) ?>
+                                                                                </span>
+                                                                            </a>
+                                                                            <?php if (!empty($subMenuItem3['childData'])): ?>
+                                                                                <button
+                                                                                    @click="customSubcategory('<?= /* @noEscape */ $index4 ?>')"
+                                                                                    class="flex items-center justify-center mr-3 cursor-pointer"
+                                                                                    aria-label="<?= $escaper->escapeHtmlAttr(__('Open %1 subcategories', $subMenuItem3['name'])) ?>"
+                                                                                    aria-haspopup="true"
+                                                                                    :aria-expanded="mobilePanelActiveId === '<?= /* @noEscape */ (string) $index4 ?>'"
+                                                                                >
+                                                                                    <?= $heroicons->chevronRightHtml('', 20, 20, ["aria-hidden" => "true"]) ?>
+                                                                                </button>
+                                                                            <?php endif; ?>
+                                                                        </div>
+                                                                    </li>
+                                                                    <?php if (!empty($subMenuItem3['childData'])): ?>
+                                                                        <li 
+                                                                            :class="{
+                                                                                'hidden': mobilePanelActiveId !== '<?= /* @noEscape */ (string) $index4 ?>',
+                                                                                'mt-4 ml-4 mr-4': mobilePanelActiveId === '<?= /* @noEscape */ (string) $index4 ?>',
+                                                                            }">
+                                                                            <button
+                                                                                type="button"
+                                                                                class="
+                                                                                    flex items-center px-4 py-3 cursor-pointer
+                                                                                    w-full text-neutral font-medium bg-neutral-100
+                                                                                "
+                                                                                @click="customSubcategory('<?= /* @noEscape */ $index3 ?>')"
+                                                                                aria-label="<?= $escaper->escapeHtmlAttr(__('Back to main categories')) ?>"
+                                                                            >
+                                                                                <?= $heroicons->chevronLeftHtml('', 20, 20, ["aria-hidden" => "true"]); ?>
+                                                                                <span class="ml-2 text-left">
+                                                                                    <?= $escaper->escapeHtml($menuItem['name']) ?> /
+                                                                                    <?= $escaper->escapeHtml($subMenuItem['name']) ?> /
+                                                                                    <?= $escaper->escapeHtml($subMenuItem1['name']) ?> /
+                                                                                    <?= $escaper->escapeHtml($subMenuItem2['name']) ?> /
+                                                                                    <?= $escaper->escapeHtml($subMenuItem3['name']) ?>
+                                                                                </span>
+                                                                            </button>
+                                                                        </li>
+                                                                        <?php foreach ($subMenuItem3['childData'] as $index5 => $subMenuItem4): ?>
+                                                                            <li class="relative" 
+                                                                                :class="{
+                                                                                    'hidden': mobilePanelActiveId !== '<?= /* @noEscape */ (string) $index4 ?>',
+                                                                                    'ml-4 mr-4': mobilePanelActiveId === '<?= /* @noEscape */ (string) $index4 ?>',
+                                                                                }">
+                                                                                <div class="flex justify-between
+                                                                                    after:absolute after:content-[''] after:border-b-neutral-100 after:border-b after:border-solid after:bottom-0 after:inset-x-[16px]
+                                                                                    hover:text-primary
+                                                                                ">
+                                                                                    <a
+                                                                                        href="<?= $escaper->escapeUrl($subMenuItem4['url']) ?>"
+                                                                                        title="<?= $escaper->escapeHtmlAttr($subMenuItem4['name']) ?>"
+                                                                                        class="
+                                                                                            flex items-center w-full p-4 cursor-pointer text-neutral-500 relative
+                                                                                        "
+                                                                                    >
+                                                                                        <span>
+                                                                                            <?= $escaper->escapeHtml($subMenuItem4['name']) ?>
+                                                                                        </span>
+                                                                                    </a>
+                                                                                    <?php if (!empty($subMenuItem4['childData'])): ?>
+                                                                                        <button
+                                                                                            @click="customSubcategory('<?= /* @noEscape */ $index5 ?>')"
+                                                                                            class="flex items-center justify-center mr-3 cursor-pointer"
+                                                                                            aria-label="<?= $escaper->escapeHtmlAttr(__('Open %1 subcategories', $subMenuItem4['name'])) ?>"
+                                                                                            aria-haspopup="true"
+                                                                                            :aria-expanded="mobilePanelActiveId === '<?= /* @noEscape */ (string) $index5 ?>'"
+                                                                                        >
+                                                                                            <?= $heroicons->chevronRightHtml('', 20, 20, ["aria-hidden" => "true"]) ?>
+                                                                                        </button>
+                                                                                    <?php endif; ?>
+                                                                                </div>
+                                                                            </li>
+                                                                        <?php endforeach; ?>
+                                                                    <?php endif; ?>  
+                                                                <?php endforeach; ?>
+                                                            <?php endif; ?>
+                                                        <?php endforeach; ?>
+                                                    <?php endif; ?>
+                                                <?php endforeach; ?>
+                                            <?php endif; ?>
+                                        <?php endforeach; ?>
+                                    </ul>
+                                </div>
+                            <?php endif; ?>
+                        </li>
+                    <?php endforeach; ?>
+                    <?= $block->getChildHtml('custom.cms.menu.mobile') ?>                                                                                                                                                                                                   
+                </ul>
+            </div>
+            <div class="tab-panel max-h-[calc(100%_-_44px)]" :class="{ 'active': activeTab === 'account' }" x-show="activeTab === 'account'">
+                <?php
+                    echo $this->getLayout()
+                    ->createBlock("Magento\Customer\Block\Account\Customer")
+                    ->setTemplate("Magento_Customer::header/customer-menu.phtml")
+                    ->toHtml();
+                ?>
+            </div>
+            <button
+                @click="closeMenu()"
+                class="absolute flex justify-end self-end mobile-menu-close"
+                aria-label="<?= $escaper->escapeHtmlAttr(__('Close menu')) ?>"
+                type="button"
+            >
+                <?= $heroicons->xHtml('hidden', 28, 28, [":class" => "{ 'hidden' : !open, 'block': open }", "aria-hidden" => "true"]) ?>
+            </button>
+        </div>
+    </div>
+</nav>
+<script>
+    'use strict';
+
+    const initMenuMobile<?= $escaper->escapeHtml($uniqueId) ?> = () => {
+        return {
+            mobilePanelActiveId: null,
+            open: false,
+            setActiveMenu(menuNode) {
+                Array.from(menuNode.querySelectorAll('a')).filter(link => {
+                    return link.href === window.location.href.split('?')[0];
+                }).map(item => {
+                    item.classList.add('active');
+                    item.closest('li.level-0') &&
+                    item.closest('li.level-0').querySelector('a.level-0').classList.add('active');
+                });
+            },
+            openMenu() {
+                this.open = true
+                this.$nextTick(() => hyva.trapFocus(this.$refs['mobileMenuNavLinks']));
+                // Prevent from body scrolling while mobile menu opened
+                document.body.style.position = 'fixed';
+                document.body.style.width = '100%';
+            },
+            closeMenu() {
+                document.body.style.position = '';
+                document.body.style.width = '';
+
+                if (this.open) {
+                    this.$nextTick(() => this.$refs['mobileMenuTrigger'].focus() || hyva.releaseFocus());
+                }
+
+                this.open = false
+                this.mobilePanelActiveId = null
+            },
+            openSubcategory(index) {
+                const menuNodeRef = document.querySelector('[data-child-id=' + index + ']')
+                this.mobilePanelActiveId = this.mobilePanelActiveId === index ? 0 : index
+                this.$nextTick(() => hyva.trapFocus(menuNodeRef))
+            },
+            customSubcategory(index) {
+                this.mobilePanelActiveId = this.mobilePanelActiveId === index ? 0 : index;
+            },
+            backToMainCategories(index) {
+                const menuNodeRef = document.querySelector('[data-child-id=' + index + ']')
+                this.mobilePanelActiveId = 0
+                this.$nextTick(() => {
+                    hyva.trapFocus(this.$refs['mobileMenuNavLinks'])
+                    menuNodeRef.querySelector('a').focus()
+                })
+            }
+        }
+    };
+</script>
